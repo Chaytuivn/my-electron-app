@@ -1,10 +1,12 @@
 const { app, BrowserWindow, ipcMain } = require("electron/main");
 const path = require("node:path");
 const squirrelEvent = process.argv[1];
+const { autoUpdater } = require("electron-updater");
 
 if (squirrelEvent && squirrelEvent.startsWith("--squirrel")) {
-  app.quit(); // 🚀 Nếu đang cài đặt, thoát luôn
+    app.quit(); // 🚀 Nếu đang cài đặt, thoát luôn
 }
+
 const createWindow = () => {
     const win = new BrowserWindow({
         width: 1024,
@@ -17,8 +19,40 @@ const createWindow = () => {
     win.loadFile("index.html");
 };
 
+autoUpdater.on("update-available", () => {
+    dialog
+        .showMessageBox({
+            type: "info",
+            title: "Update Available",
+            message: "Có bản cập nhật mới, bạn có muốn tải về không?",
+            buttons: ["Có", "Không"],
+        })
+        .then((result) => {
+            if (result.response === 0) autoUpdater.downloadUpdate();
+        });
+});
+
+autoUpdater.on("update-downloaded", () => {
+    dialog
+        .showMessageBox({
+            type: "info",
+            title: "Update Ready",
+            message: "Cập nhật đã tải xong. Khởi động lại ứng dụng để áp dụng?",
+            buttons: ["Khởi động lại", "Để sau"],
+        })
+        .then((result) => {
+            if (result.response === 0) autoUpdater.quitAndInstall();
+        });
+});
+
 app.whenReady().then(() => {
-    ipcMain.handle("ping", (event,req) => {
+    try {
+        autoUpdater.checkForUpdates();
+    } catch (e) {
+        console.error("Update check failed:", e);
+    }
+
+    ipcMain.handle("ping", (event, req) => {
         console.log("receive req:", req);
         return " response from main";
     });

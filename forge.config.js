@@ -15,7 +15,7 @@ module.exports = {
           name: 'my-electron-app'
         },
         prerelease: false,
-        draft: true
+        draft: false
       }
     }
   ],
